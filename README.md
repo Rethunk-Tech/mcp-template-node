@@ -11,8 +11,12 @@ Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.
 ## Features
 
 - TypeScript implementation with strict type checking
-- ESLint configuration with sensible defaults
+- ESLint configuration with sensible defaults (no Prettier)
 - Simple notes management system with create, list, and get operations
+- Complete examples of MCP concepts:
+  - Tools: `create_note`, `list_notes`, `get_note`
+  - Resources: Static and parameterized examples
+  - Prompts: Help prompt template
 - In-memory storage (easily replaceable with a database)
 - Well-organized code structure with separate concerns
 - Comprehensive error handling and validation
@@ -33,7 +37,7 @@ mcp-template-node/
 │   ├── tools/         # MCP tool implementations
 │   │   └── __tests__/ # Tool tests
 │   ├── types/         # TypeScript type definitions
-│   └── index.ts       # Main server entry point
+│   └── index.ts       # Main server entry point with MCP examples
 ├── .vscode/           # VS Code configuration
 ├── build/             # Compiled JavaScript files
 ├── package.json       # Project configuration
@@ -97,7 +101,95 @@ yarn inspector
 
 This will open an interactive session where you can test your MCP tools.
 
-## Available Tools
+## MCP Server Components
+
+### 1. Server Setup
+
+```typescript
+const server = new McpServer({
+  name: 'example-mcp-server',
+  version: '1.0.0'
+})
+
+// Connect to transport (typically stdin/stdout)
+const transport = new StdioServerTransport()
+await server.connect(transport)
+```
+
+### 2. Resources
+
+Resources are read-only data sources, similar to GET endpoints in REST APIs:
+
+```typescript
+// Static resource
+server.resource(
+  'config',
+  'config://app',
+  async (uri) => ({
+    contents: [{
+      uri: uri.href,
+      text: 'Configuration data here'
+    }]
+  })
+)
+
+// Parameterized resource
+server.resource(
+  'note-info',
+  new ResourceTemplate('notes://{noteId}/info', { list: undefined }),
+  async (uri, { noteId }) => ({
+    contents: [{
+      uri: uri.href,
+      text: `Information about note ${noteId}`
+    }]
+  })
+)
+```
+
+### 3. Tools
+
+Tools let LLMs perform actions with potential side effects:
+
+```typescript
+server.tool(
+  'create_note',
+  {
+    title: z.string().min(1),
+    content: z.string().min(1)
+  },
+  async ({ title, content }) => {
+    // Implementation here
+    return {
+      content: [{
+        type: 'text',
+        text: 'Note created successfully'
+      }]
+    }
+  }
+)
+```
+
+### 4. Prompts
+
+Prompts provide templates for LLM interactions:
+
+```typescript
+server.prompt(
+  'help',
+  {},
+  () => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: 'Help message here'
+      }
+    }]
+  })
+)
+```
+
+## Available Tools in This Template
 
 ### 1. Create Note
 Creates a new note with a title and content.
@@ -132,15 +224,18 @@ Retrieves a specific note by its ID.
 }
 ```
 
-## Integrating with LLM Applications
+### 4. Calculate
+Performs a simple calculation (demonstration purposes only).
 
-To use this MCP server with an LLM application:
+**Parameters:**
+- `expression` (string): The expression to evaluate
 
-1. Start the MCP server
-2. Configure your LLM application to connect to the MCP server
-3. The LLM can now use the tools provided by the server to manage notes
-
-Check your LLM application's documentation for specific integration steps.
+**Example:**
+```json
+{
+  "expression": "2 + 2"
+}
+```
 
 ## Extending the Template
 

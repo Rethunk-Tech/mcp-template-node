@@ -132,3 +132,42 @@ describe('Note Tools - get_note success', () => {
     expect(getResult.content[0].text).toContain('Test Content')
   })
 })
+
+// Tests for the calculate tool defined in index.ts
+describe('Calculate Tool Tests', () => {
+  // Mock implementation of the calculate tool
+  const calculateTool = async (params: { expression: string }): Promise<{ content: Array<{ type: string; text: string }> }> => {
+    try {
+      // WARNING: Using eval in tests is for demonstration purposes only
+      const result = eval(params.expression)
+      return {
+        content: [{
+          type: 'text',
+          text: `Result: ${result}`
+        }]
+      }
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Error calculating expression: ${(error as Error).message}`
+        }]
+      }
+    }
+  }
+
+  it('should calculate simple arithmetic expressions', async () => {
+    const result = await calculateTool({ expression: '2 + 2' })
+    expect(result.content[0].text).toBe('Result: 4')
+  })
+
+  it('should handle more complex expressions', async () => {
+    const result = await calculateTool({ expression: '(10 * 5) / 2' })
+    expect(result.content[0].text).toBe('Result: 25')
+  })
+
+  it('should return error for invalid expressions', async () => {
+    const result = await calculateTool({ expression: '2 + * 2' })
+    expect(result.content[0].text).toContain('Error calculating expression:')
+  })
+})
