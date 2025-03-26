@@ -1,0 +1,16 @@
+# Yarn berry (zero install)
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Node
+node_modules/
+
+# Editor
+.cursorrules
+.idea/
+.vscode/
