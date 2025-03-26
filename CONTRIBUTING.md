@@ -42,18 +42,24 @@ src/
    - Use interfaces for object types
    - Document public APIs with JSDoc comments
 
-2. **Error Handling**
+2. **Code Style**
+   - Use single quotes for strings
+   - No semicolons at the end of statements
+   - 2-space indentation
+   - Follow ESLint rules defined in `eslint.config.mjs`
+
+3. **Error Handling**
    - Use custom error classes for domain-specific errors
    - Include error codes for better error identification
    - Handle all possible error cases
 
-3. **Tool Implementation**
+4. **Tool Implementation**
    - Keep tools focused and single-purpose
    - Use Zod for input validation
    - Follow the MCP response format
    - Include comprehensive error handling
 
-4. **Testing**
+5. **Testing**
    - Test tools using MCP Inspector
    - Verify error cases
    - Check input validation
