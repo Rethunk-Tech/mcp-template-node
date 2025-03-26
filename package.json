@@ -1,26 +1,43 @@
 {
-  "name": "mcp-template-node",
-  "version": "1.0.0",
-  "type": "module",
-  "bin": {
-    "mcp-example": "./build/index.js"
+  "author": "",
+  "description": "A template repository for creating MCP (Model Context Protocol) servers in Node.js/TypeScript",
+  "engines": {
+    "node": ">=18.0.0"
   },
-  "files": [
-    "build"
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "ai",
+    "template"
   ],
-  "scripts": {
-    "build": "tsc && chmod +x build/index.js",
-    "start": "node build/index.js",
-    "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.7.0",
-    "zod": "^3.24.2"
-  },
+  "license": "MIT",
+  "main": "build/index.js",
+  "name": "mcp-template-node",
+  "packageManager": "yarn@4.7.0",
+  "type": "module",
+  "version": "1.0.0",
   "devDependencies": {
     "@types/node": "^22.13.13",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.2"
   },
-  "packageManager": "yarn@4.7.0"
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.24.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf build",
+    "dev": "tsc -w",
+    "inspector": "mcp-inspector",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "prebuild": "npm run clean",
+    "start": "node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
 }
