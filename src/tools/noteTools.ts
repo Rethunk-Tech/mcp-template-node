@@ -97,6 +97,7 @@ export function registerNoteTools(server: McpServer): void {
           }]
         }
       } catch (error) {
+        console.error('Error listing notes:', error)
         return {
           content: [{
             type: 'text',
