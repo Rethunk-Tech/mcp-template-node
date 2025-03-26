@@ -7,6 +7,16 @@ import { Note } from '../types/note.js'
 const notes: Record<string, Note> = {}
 
 /**
+ * Resets the in-memory notes storage (for testing purposes)
+ */
+export function resetNotes(): void {
+  // Clear all notes from the in-memory storage
+  Object.keys(notes).forEach(key => {
+    delete notes[key]
+  })
+}
+
+/**
  * Generates a unique ID for a note
  */
 function generateId(): string {
