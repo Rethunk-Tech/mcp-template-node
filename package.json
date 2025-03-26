@@ -1,3 +1,4 @@
 {
+  "name": "mcp-template-node",
   "packageManager": "yarn@4.7.0"
 }
