@@ -1,6 +1,17 @@
 {
   "name": "mcp-template-node",
   "packageManager": "yarn@4.7.0",
+  "type": "module",
+  "bin": {
+    "mcp-example": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "start": "node build/index.js"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
     "zod": "^3.24.2"

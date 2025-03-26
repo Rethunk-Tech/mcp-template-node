@@ -450,6 +450,8 @@ __metadata:
     "@types/node": "npm:^22.13.13"
     typescript: "npm:^5.8.2"
     zod: "npm:^3.24.2"
+  bin:
+    mcp-example: ./build/index.js
   languageName: unknown
   linkType: soft
 
