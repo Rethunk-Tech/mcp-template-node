@@ -38,7 +38,8 @@ mcp-template-node/
 ├── build/             # Compiled JavaScript files
 ├── package.json       # Project configuration
 ├── tsconfig.json      # TypeScript configuration
-└── .eslintrc.json     # ESLint configuration
+├── eslint.config.mjs  # ESLint flat configuration
+└── README.md          # Project documentation
 ```
 
 ## Getting Started
@@ -192,9 +193,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to th
 ## License
 
 MIT
-
-## Resources
-
-- [Model Context Protocol Website](https://modelcontextprotocol.github.io/)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [MCP TypeScript Server Creator](https://github.com/modelcontextprotocol/create-typescript-server)
