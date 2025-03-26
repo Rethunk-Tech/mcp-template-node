@@ -52,22 +52,16 @@ mcp-template-node/
 2. Install dependencies:
    ```bash
    yarn install
-   # or
-   npm install
    ```
 
 3. Build the project:
    ```bash
    yarn build
-   # or
-   npm run build
    ```
 
 4. Run the server:
    ```bash
    yarn start
-   # or
-   npm start
    ```
 
 ## Development
@@ -75,22 +69,21 @@ mcp-template-node/
 1. Start the TypeScript compiler in watch mode:
    ```bash
    yarn dev
-   # or
-   npm run dev
    ```
 
 2. Lint your code:
    ```bash
    yarn lint
-   # or
-   npm run lint
    ```
 
 3. Fix linting issues:
    ```bash
    yarn lint:fix
-   # or
-   npm run lint:fix
+   ```
+
+4. Run tests:
+   ```bash
+   yarn test
    ```
 
 ## Testing with MCP Inspector
@@ -99,8 +92,6 @@ For standalone testing, you can use the MCP Inspector tool:
 
 ```bash
 yarn inspector
-# or
-npm run inspector
 ```
 
 This will open an interactive session where you can test your MCP tools.
