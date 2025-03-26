@@ -1,4 +1,7 @@
 {
   "name": "mcp-template-node",
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "yarn@4.7.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.7.0"
+  }
 }
