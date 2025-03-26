@@ -1,5 +1,5 @@
 {
-  "author": "",
+  "author": "Damon Blais <damon@rethunk.tech>",
   "description": "A template repository for creating MCP (Model Context Protocol) servers in Node.js/TypeScript",
   "engines": {
     "node": ">=18.0.0"
@@ -17,27 +17,28 @@
   "packageManager": "yarn@4.7.0",
   "type": "module",
   "version": "1.0.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.24.2"
+  },
   "devDependencies": {
     "@types/node": "^22.13.13",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
     "eslint": "^9.23.0",
-    "rimraf": "^6.0.1",
+    "nodemon": "^3.1.9",
     "typescript": "^5.8.2"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "zod": "^3.24.2"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf build",
+    "clean": "rm -rf build",
     "dev": "tsc -w",
-    "inspector": "mcp-inspector",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "prebuild": "npm run clean",
+    "prebuild": "yarn clean",
     "start": "node build/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "inspector": "mcp-inspector",
+    "test": "yarn build && node build/tools/__tests__/noteTools.test.js",
+    "test:watch": "nodemon --watch src --ext ts --exec yarn test"
   }
 }
