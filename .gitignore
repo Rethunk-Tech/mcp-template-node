@@ -12,5 +12,6 @@ node_modules/
 
 # Editor
 .cursorrules
+.cursor/
 .idea/
 .vscode/
