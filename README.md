@@ -1,34 +1,49 @@
 # MCP Template Node
 
-A starter template for creating Model Context Protocol (MCP) servers using Node.js and TypeScript. This template implements a simple note-taking service to demonstrate core MCP concepts.
+A template repository for creating Model Context Protocol (MCP) servers in Node.js/TypeScript. This template demonstrates how to build a simple notes management system using the MCP protocol, which can be used with LLM-powered applications.
 
 ## What is MCP?
 
 The Model Context Protocol (MCP) is a standardized way for applications to provide context to Large Language Models (LLMs). It separates the concerns of providing context from the actual LLM interaction, allowing for more modular and maintainable AI-powered applications.
 
+Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.github.io/).
+
 ## Features
 
-This template includes:
-
-- A complete MCP server implementation with note-taking functionality
-- In-memory storage for notes (for demonstration purposes)
-- Tools for creating, listing, and retrieving notes
-- TypeScript configuration and project structure
-
-### Available Tools
-
-1. `create_note` - Create a new note with a title and content
-2. `list_notes` - List all available notes
-3. `get_note` - Get a specific note by its ID
+- TypeScript implementation with strict type checking
+- ESLint configuration with sensible defaults
+- Simple notes management system with create, list, and get operations
+- In-memory storage (easily replaceable with a database)
+- Well-organized code structure with separate concerns
+- Comprehensive error handling and validation
+- Example test structure
+- VS Code debugging configuration
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 18 or later
 - npm or yarn
+
+## Project Structure
+
+```
+mcp-template-node/
+├── src/
+│   ├── errors/        # Custom error classes
+│   ├── tools/         # MCP tool implementations
+│   │   └── __tests__/ # Tool tests
+│   ├── types/         # TypeScript type definitions
+│   └── index.ts       # Main server entry point
+├── .vscode/           # VS Code configuration
+├── build/             # Compiled JavaScript files
+├── package.json       # Project configuration
+├── tsconfig.json      # TypeScript configuration
+└── .eslintrc.json     # ESLint configuration
+```
 
 ## Getting Started
 
-1. Clone this repository:
+1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/mcp-template-node.git
    cd mcp-template-node
@@ -37,126 +52,151 @@ This template includes:
 2. Install dependencies:
    ```bash
    yarn install
-   ```
-   or
-   ```bash
+   # or
    npm install
    ```
 
 3. Build the project:
    ```bash
    yarn build
-   ```
-   or
-   ```bash
+   # or
    npm run build
    ```
 
-4. Start the server:
+4. Run the server:
    ```bash
    yarn start
-   ```
-   or
-   ```bash
+   # or
    npm start
+   ```
+
+## Development
+
+1. Start the TypeScript compiler in watch mode:
+   ```bash
+   yarn dev
+   # or
+   npm run dev
+   ```
+
+2. Lint your code:
+   ```bash
+   yarn lint
+   # or
+   npm run lint
+   ```
+
+3. Fix linting issues:
+   ```bash
+   yarn lint:fix
+   # or
+   npm run lint:fix
    ```
 
 ## Testing with MCP Inspector
 
-The server runs on stdio, making it compatible with LLM systems that support the MCP protocol. To test it, you can use the MCP Inspector tool:
+For standalone testing, you can use the MCP Inspector tool:
 
 ```bash
 yarn inspector
+# or
+npm run inspector
 ```
 
-This will allow you to interactively test the MCP server's functionality.
+This will open an interactive session where you can test your MCP tools.
 
-Example interactions:
+## Available Tools
 
-1. Create a note:
-   ```json
-   {
-     "name": "create_note",
-     "params": {
-       "title": "My First Note",
-       "content": "This is a test note created via MCP."
-     }
-   }
-   ```
+### 1. Create Note
+Creates a new note with a title and content.
 
-2. List all notes:
-   ```json
-   {
-     "name": "list_notes",
-     "params": {}
-   }
-   ```
+**Parameters:**
+- `title` (string): The title of the note
+- `content` (string): The content of the note
 
-3. Get a specific note:
-   ```json
-   {
-     "name": "get_note",
-     "params": {
-       "id": "abc123"
-     }
-   }
-   ```
+**Example:**
+```json
+{
+  "title": "Meeting Minutes",
+  "content": "Discussed project timeline and milestones..."
+}
+```
 
-## Project Structure
+### 2. List Notes
+Lists all available notes.
 
-- `src/index.ts` - Main server implementation with tools and request handlers
-- `package.json` - Project configuration and dependencies
-- `tsconfig.json` - TypeScript configuration
+**Parameters:** None
+
+### 3. Get Note
+Retrieves a specific note by its ID.
+
+**Parameters:**
+- `id` (string): The ID of the note to retrieve
+
+**Example:**
+```json
+{
+  "id": "abc123"
+}
+```
+
+## Integrating with LLM Applications
+
+To use this MCP server with an LLM application:
+
+1. Start the MCP server
+2. Configure your LLM application to connect to the MCP server
+3. The LLM can now use the tools provided by the server to manage notes
+
+Check your LLM application's documentation for specific integration steps.
 
 ## Extending the Template
 
-To customize this template for your own MCP server:
+To add new tools to the MCP server:
 
-1. Define your tools in `src/index.ts`:
-   ```typescript
-   const myTool: Tool = {
-     name: "my_tool",
-     description: "Description of what the tool does",
-     inputSchema: {
-       type: "object",
-       required: ["param1"],
-       properties: {
-         param1: {
-           type: "string",
-           description: "Description of the parameter"
-         }
-       }
-     }
-   };
-   ```
+1. Add type definitions in `src/types/`
+2. Add error types in `src/errors/` if needed
+3. Create a new tool implementation in `src/tools/`
+4. Register the tool in the server
 
-2. Add your tool to the list of available tools:
-   ```typescript
-   server.setRequestHandler(ListToolsRequestSchema, async () => {
-     return { tools: [myTool] };
-   });
-   ```
+Example new tool implementation:
 
-3. Handle your tool's execution:
-   ```typescript
-   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-     const { name, params } = request.params;
+```typescript
+// src/tools/searchTools.ts
+import { z } from 'zod'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-     switch (name) {
-       case "my_tool": {
-         // Tool implementation
-         return {
-           content: [
-             {
-               type: "text",
-               text: "Tool result"
-             }
-           ]
-         };
-       }
-     }
-   });
-   ```
+export function registerSearchTools(server: McpServer): void {
+  server.tool(
+    'search_notes',
+    {
+      query: z.string().min(1, 'Search query is required')
+    },
+    async ({ query }) => {
+      // Implementation here
+      return {
+        content: [{
+          type: 'text',
+          text: `Search results for: ${query}`
+        }]
+      }
+    }
+  )
+}
+```
+
+Then register it in `src/index.ts`:
+
+```typescript
+import { registerSearchTools } from './tools/searchTools.js'
+
+// In main function
+registerSearchTools(server)
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## License
 
@@ -164,6 +204,6 @@ MIT
 
 ## Resources
 
-- [Model Context Protocol Website](https://modelcontextprotocol.io)
+- [Model Context Protocol Website](https://modelcontextprotocol.github.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [MCP TypeScript Server Creator](https://github.com/modelcontextprotocol/create-typescript-server)
