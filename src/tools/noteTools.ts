@@ -34,11 +34,13 @@ export function registerNoteTools(server: McpServer): void {
       title: z.string()
         .min(1, 'Title is required')
         .max(100, 'Title cannot exceed 100 characters')
-        .trim(),
+        .trim()
+        .describe('The title of the note. Must be unique, non-empty, and maximum 100 characters.'),
       content: z.string()
         .min(1, 'Content is required')
         .max(10000, 'Content cannot exceed 10000 characters')
         .trim()
+        .describe('The content/body of the note. Must be non-empty and maximum 10000 characters.')
     },
     async ({ title, content }) => {
       try {
@@ -80,7 +82,9 @@ export function registerNoteTools(server: McpServer): void {
   // List Notes Tool
   server.tool(
     'list_notes',
-    {},
+    {
+      // Empty schema since this tool doesn't require parameters
+    },
     async () => {
       try {
         const notesList = Object.values(notes)
@@ -126,6 +130,7 @@ export function registerNoteTools(server: McpServer): void {
         .min(1, 'ID is required')
         .max(8, 'Invalid ID format')
         .regex(/^[a-z0-9]+$/, 'Invalid ID format')
+        .describe('The unique identifier of the note to retrieve. Must be an alphanumeric string up to 8 characters. You can get note IDs by using the list_notes tool.')
     },
     async ({ id }) => {
       try {

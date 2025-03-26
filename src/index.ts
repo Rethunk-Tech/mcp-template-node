@@ -35,6 +35,7 @@ async function main(): Promise<void> {
     )
 
     // Example of a dynamic resource with parameters
+    // noteId: The unique identifier of the note to retrieve metadata for (e.g., "abc123")
     server.resource(
       'note-info',
       new ResourceTemplate('notes://{noteId}/info', { list: undefined }),
@@ -55,7 +56,28 @@ async function main(): Promise<void> {
           role: 'user',
           content: {
             type: 'text',
-            text: 'Welcome to the Notes MCP server! You can:\n\n1. Create notes using the create_note tool\n2. List notes using list_notes\n3. Get a specific note with get_note'
+            text: `Welcome to the Notes MCP server! You can use the following tools:
+
+1. Create a new note
+   Tool: create_note
+   Parameters:
+   - title: A unique title for your note (required, max 100 chars)
+   - content: The body text of your note (required, max 10000 chars)
+   Example: { "title": "Meeting Notes", "content": "Discussed project timeline" }
+
+2. List all available notes
+   Tool: list_notes
+   Parameters: None
+   This tool shows all notes with their IDs, which you'll need for retrieving specific notes.
+
+3. Get a specific note by ID
+   Tool: get_note
+   Parameters:
+   - id: The note's unique identifier (required, alphanumeric, max 8 chars)
+   Example: { "id": "abc123" }
+   Tip: Use list_notes first to find the ID of the note you want.
+
+You can also access resources like 'config://app' for application configuration or 'notes://{noteId}/info' for note metadata.`
           }
         }]
       })

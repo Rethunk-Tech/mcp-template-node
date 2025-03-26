@@ -195,8 +195,8 @@ server.prompt(
 Creates a new note with a title and content.
 
 **Parameters:**
-- `title` (string): The title of the note
-- `content` (string): The content of the note
+- `title` (string): The title of the note. Must be unique, non-empty, and maximum 100 characters.
+- `content` (string): The content/body of the note. Must be non-empty and maximum 10000 characters.
 
 **Example:**
 ```json
@@ -207,15 +207,30 @@ Creates a new note with a title and content.
 ```
 
 ### 2. List Notes
-Lists all available notes.
+Lists all available notes with their IDs, titles, and creation timestamps.
 
-**Parameters:** None
+**Parameters:** None (requires no input parameters)
+
+**Example Response:**
+```
+Available Notes:
+
+ID: abc123
+Title: Meeting Minutes
+Created: 2023-04-15T08:30:25.123Z
+---
+
+ID: def456
+Title: Project Ideas
+Created: 2023-04-14T14:22:10.987Z
+---
+```
 
 ### 3. Get Note
 Retrieves a specific note by its ID.
 
 **Parameters:**
-- `id` (string): The ID of the note to retrieve
+- `id` (string): The unique identifier of the note to retrieve. Must be an alphanumeric string up to 8 characters. You can get note IDs by using the list_notes tool.
 
 **Example:**
 ```json
@@ -224,17 +239,12 @@ Retrieves a specific note by its ID.
 }
 ```
 
-### 4. Calculate
-Performs a simple calculation (demonstration purposes only).
+**Example Response:**
+```
+Title: Meeting Minutes
+Created: 2023-04-15T08:30:25.123Z
 
-**Parameters:**
-- `expression` (string): The expression to evaluate
-
-**Example:**
-```json
-{
-  "expression": "2 + 2"
-}
+Discussed project timeline and milestones...
 ```
 
 ## Extending the Template
