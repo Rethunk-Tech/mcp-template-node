@@ -22,6 +22,7 @@ Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.
 - Comprehensive error handling and validation
 - Example test structure
 - VS Code debugging configuration
+- GitHub Actions CI workflow for testing and building
 
 ## Prerequisites
 
@@ -90,6 +91,15 @@ mcp-template-node/
    ```bash
    yarn test
    ```
+
+## Continuous Integration
+
+This project includes GitHub Actions workflows that automatically run on pull requests and commits to the main branch:
+
+- **Testing**: Runs linting and unit tests across multiple Node.js versions
+- **Building**: Creates production builds and uploads artifacts for review
+
+The CI configuration is located in `.github/workflows/ci.yml`.
 
 ## Testing with MCP Inspector
 
