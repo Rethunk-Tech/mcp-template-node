@@ -1,26 +1,19 @@
 # MCP Template Node
 
-A template repository for creating Model Context Protocol (MCP) servers in Node.js/TypeScript. This template demonstrates how to build a simple notes management system using the MCP protocol, which can be used with LLM-powered applications.
+A template repository for creating Model Context Protocol (MCP) servers in Node.js/TypeScript. This template demonstrates a simple notes management system using the MCP protocol.
 
 ## What is MCP?
 
-The Model Context Protocol (MCP) is a standardized way for applications to provide context to Large Language Models (LLMs). It separates the concerns of providing context from the actual LLM interaction, allowing for more modular and maintainable AI-powered applications.
-
-Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.github.io/).
+The Model Context Protocol (MCP) is a standardized way for applications to provide context to Large Language Models (LLMs). Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.github.io/).
 
 ## Features
 
 - TypeScript implementation with strict type checking
-- ESLint configuration with sensible defaults (no Prettier)
-- Simple notes management system with create, list, and get operations
-- Complete examples of MCP concepts:
-  - Tools: `create_note`, `list_notes`, `get_note`
-  - Resources: Static and parameterized examples
-  - Prompts: Help prompt template
-- In-memory storage (easily replaceable with a database)
-- Well-organized code structure with separate concerns
+- Simple notes management system with basic CRUD operations
+- Complete examples of MCP concepts (Tools, Resources, Prompts)
+- In-memory storage for notes
 - Comprehensive error handling and validation
-- Example test structure
+- Unit tests with Vitest
 - VS Code debugging configuration
 - GitHub Actions CI workflow for testing and building
 
@@ -31,79 +24,108 @@ Learn more at the [Model Context Protocol Website](https://modelcontextprotocol.
 
 ## Project Structure
 
-```
+```shell
 mcp-template-node/
+├── build/                # Compiled JavaScript files
 ├── src/
-│   ├── errors/        # Custom error classes
-│   ├── tools/         # MCP tool implementations
-│   │   └── __tests__/ # Tool tests
-│   ├── types/         # TypeScript type definitions
-│   └── index.ts       # Main server entry point with MCP examples
-├── .vscode/           # VS Code configuration
-├── build/             # Compiled JavaScript files
-├── package.json       # Project configuration
-├── tsconfig.json      # TypeScript configuration
-├── eslint.config.mjs  # ESLint flat configuration
-└── README.md          # Project documentation
+│   ├── __tests__/        # Integration tests and test utilities
+│   ├── errors/           # Custom error classes
+│   ├── tools/            # MCP tool implementations
+│   │   └── __tests__/    # Tool unit tests
+│   ├── types/            # TypeScript type definitions
+│   │   └── __tests__/    # Type tests
+│   └── index.ts          # Main server entry point with MCP examples
+├── package.json          # Project configuration
+├── tsconfig.json         # TypeScript configuration
+├── eslint.config.mjs     # ESLint flat configuration
+└── README.md             # Project documentation
 ```
 
 ## Getting Started
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/yourusername/mcp-template-node.git
+   git clone https://github.com/Rethunk-Tech/mcp-template-node.git
    cd mcp-template-node
    ```
 
 2. Install dependencies:
+
    ```bash
    yarn install
    ```
 
-3. Build the project:
+3. Build and run the server:
+
    ```bash
    yarn build
-   ```
-
-4. Run the server:
-   ```bash
    yarn start
    ```
 
 ## Development
 
-1. Start the TypeScript compiler in watch mode:
-   ```bash
-   yarn dev
-   ```
+- Start TypeScript compiler in watch mode: `yarn dev`
+- Lint your code: `yarn lint`
+- Fix linting issues: `yarn lint:fix`
+- Run tests: `yarn test`
 
-2. Lint your code:
-   ```bash
-   yarn lint
-   ```
+## Testing
 
-3. Fix linting issues:
-   ```bash
-   yarn lint:fix
-   ```
+This project includes comprehensive tests to verify the functionality of the MCP server and its tools.
 
-4. Run tests:
-   ```bash
-   yarn test
-   ```
+### Running Tests
 
-## Continuous Integration
+Run all tests:
 
-This project includes GitHub Actions workflows that automatically run on pull requests and commits to the main branch:
+```bash
+yarn test
+```
 
-- **Testing**: Runs linting and unit tests across multiple Node.js versions
-- **Building**: Creates production builds and uploads artifacts for review
+Run tests in watch mode (rerun tests when files change):
 
-The CI configuration is located in `.github/workflows/ci.yml`.
+```bash
+yarn test:watch
+```
+
+Run tests with coverage:
+
+```bash
+yarn test:coverage
+```
+
+### Test Structure
+
+- **Unit Tests**: Located in `__tests__` directories near the code they test
+- **Integration Tests**: Located in `src/__tests__/`
+- **Test Utilities**: Common test helpers in `src/__tests__/test-utils.ts`
+
+### Writing Tests
+
+The project includes a MockMcpServer for testing tools without real MCP dependencies:
+
+```typescript
+import { MockMcpServer } from '../__tests__/test-utils.js';
+
+describe('My Tool Tests', () => {
+  let server: MockMcpServer;
+
+  beforeEach(() => {
+    server = new MockMcpServer();
+    // Register tools
+    registerMyTools(server as any);
+  });
+
+  it('should perform some action', async () => {
+    const result = await server.callTool('my_tool', { param: 'value' });
+    expect(result.content[0].text).toContain('Expected text');
+  });
+});
+```
 
 ## Testing with MCP Inspector
 
-For standalone testing, you can use the MCP Inspector tool:
+For standalone testing, use the MCP Inspector tool:
 
 ```bash
 yarn inspector
@@ -111,195 +133,37 @@ yarn inspector
 
 This will open an interactive session where you can test your MCP tools.
 
-## MCP Server Components
+## Available Tools
 
-### 1. Server Setup
+### Create Note
 
-```typescript
-const server = new McpServer({
-  name: 'example-mcp-server',
-  version: '1.0.0'
-})
+Creates a new note with title and content.
 
-// Connect to transport (typically stdin/stdout)
-const transport = new StdioServerTransport()
-await server.connect(transport)
-```
+### List Notes
 
-### 2. Resources
+Lists all available notes with their IDs and titles.
 
-Resources are read-only data sources, similar to GET endpoints in REST APIs:
+### Get Note
 
-```typescript
-// Static resource
-server.resource(
-  'config',
-  'config://app',
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: 'Configuration data here'
-    }]
-  })
-)
+Retrieves a specific note by ID.
 
-// Parameterized resource
-server.resource(
-  'note-info',
-  new ResourceTemplate('notes://{noteId}/info', { list: undefined }),
-  async (uri, { noteId }) => ({
-    contents: [{
-      uri: uri.href,
-      text: `Information about note ${noteId}`
-    }]
-  })
-)
-```
+### Update Note
 
-### 3. Tools
+Updates an existing note's title, content, or tags.
 
-Tools let LLMs perform actions with potential side effects:
+### Delete Note
 
-```typescript
-server.tool(
-  'create_note',
-  {
-    title: z.string().min(1),
-    content: z.string().min(1)
-  },
-  async ({ title, content }) => {
-    // Implementation here
-    return {
-      content: [{
-        type: 'text',
-        text: 'Note created successfully'
-      }]
-    }
-  }
-)
-```
-
-### 4. Prompts
-
-Prompts provide templates for LLM interactions:
-
-```typescript
-server.prompt(
-  'help',
-  {},
-  () => ({
-    messages: [{
-      role: 'user',
-      content: {
-        type: 'text',
-        text: 'Help message here'
-      }
-    }]
-  })
-)
-```
-
-## Available Tools in This Template
-
-### 1. Create Note
-Creates a new note with a title and content.
-
-**Parameters:**
-- `title` (string): The title of the note. Must be unique, non-empty, and maximum 100 characters.
-- `content` (string): The content/body of the note. Must be non-empty and maximum 10000 characters.
-
-**Example:**
-```json
-{
-  "title": "Meeting Minutes",
-  "content": "Discussed project timeline and milestones..."
-}
-```
-
-### 2. List Notes
-Lists all available notes with their IDs, titles, and creation timestamps.
-
-**Parameters:** None (requires no input parameters)
-
-**Example Response:**
-```
-Available Notes:
-
-ID: abc123
-Title: Meeting Minutes
-Created: 2023-04-15T08:30:25.123Z
----
-
-ID: def456
-Title: Project Ideas
-Created: 2023-04-14T14:22:10.987Z
----
-```
-
-### 3. Get Note
-Retrieves a specific note by its ID.
-
-**Parameters:**
-- `id` (string): The unique identifier of the note to retrieve. Must be an alphanumeric string up to 8 characters. You can get note IDs by using the list_notes tool.
-
-**Example:**
-```json
-{
-  "id": "abc123"
-}
-```
-
-**Example Response:**
-```
-Title: Meeting Minutes
-Created: 2023-04-15T08:30:25.123Z
-
-Discussed project timeline and milestones...
-```
+Deletes a note by ID.
 
 ## Extending the Template
 
-To add new tools to the MCP server:
+To extend this template:
 
-1. Add type definitions in `src/types/`
-2. Add error types in `src/errors/` if needed
-3. Create a new tool implementation in `src/tools/`
-4. Register the tool in the server
-
-Example new tool implementation:
-
-```typescript
-// src/tools/searchTools.ts
-import { z } from 'zod'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-
-export function registerSearchTools(server: McpServer): void {
-  server.tool(
-    'search_notes',
-    {
-      query: z.string().min(1, 'Search query is required')
-    },
-    async ({ query }) => {
-      // Implementation here
-      return {
-        content: [{
-          type: 'text',
-          text: `Search results for: ${query}`
-        }]
-      }
-    }
-  )
-}
-```
-
-Then register it in `src/index.ts`:
-
-```typescript
-import { registerSearchTools } from './tools/searchTools.js'
-
-// In main function
-registerSearchTools(server)
-```
+1. Add new types in `src/types/`
+2. Implement new tools in `src/tools/`
+3. Add new resources in `src/index.ts`
+4. Create new prompt templates as needed
+5. Add tests for your new functionality
 
 ## Contributing
 
