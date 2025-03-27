@@ -13,19 +13,10 @@ export interface Note {
 
   /** Timestamp when the note was created */
   createdAt: Date
-}
 
-/**
- * Schema for creating a new note
- */
-export interface CreateNoteInput {
-  title: string
-  content: string
-}
+  /** Timestamp when the note was last updated (if applicable) */
+  updatedAt?: Date
 
-/**
- * Schema for retrieving a note
- */
-export interface GetNoteInput {
-  id: string
+  /** Tags associated with the note (if any) */
+  tags?: string[]
 }
