@@ -1,5 +1,8 @@
 name: CI
 
+# Set default permissions as restrictive as possible
+permissions: {}
+
 on:
   push:
     branches: [main]
@@ -10,6 +13,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    # Only needs read-only access to contents
+    permissions:
+      contents: read
     strategy:
       matrix:
         node-version: [18.x, 20.x]
@@ -35,6 +41,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    # Needs read-only access to contents and ability to upload artifacts
+    permissions:
+      contents: read
+      actions: write  # Required for artifacts upload
     needs: test
 
     steps:
