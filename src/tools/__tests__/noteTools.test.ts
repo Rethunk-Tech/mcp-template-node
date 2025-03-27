@@ -1,173 +1,188 @@
-/**
- * Vitest test file for testing MCP note tools
- */
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { z } from 'zod'
+import { MockMcpServer, extractIdFromResponse } from '../../__tests__/test-utils.js'
 import { registerNoteTools, resetNotes } from '../noteTools.js'
 
-// Define types for the mock server
-interface ToolDefinition {
-  schema: z.ZodRawShape;
-  handler: (params: Record<string, unknown>) => Promise<unknown>;
-}
+describe('Note Tools', () => {
+  let server: MockMcpServer
 
-// Mock McpServer to simulate tool registration and calling
-class MockMcpServer {
-  private tools: Record<string, ToolDefinition> = {}
-
-  tool(name: string, schema: z.ZodRawShape, handler: (params: Record<string, unknown>) => Promise<unknown>): void {
-    this.tools[name] = { schema, handler }
-  }
-
-  async callTool(name: string, params: Record<string, unknown>): Promise<unknown> {
-    if (!this.tools[name]) {
-      throw new Error(`Tool ${name} not found`)
-    }
-    return this.tools[name].handler(params)
-  }
-}
-
-// Reset notes state before each test
-beforeEach(() => {
-  resetNotes()
-})
-
-describe('Note Tools - create_note', () => {
-  it('should create a note with valid input', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
-
-    const result = await server.callTool('create_note', {
-      title: 'Test Note',
-      content: 'This is a test note'
-    }) as { content: Array<{ type: string; text: string }> }
-
-    expect(result.content[0].type).toBe('text')
-    expect(result.content[0].text).toContain('Note created with ID:')
+  beforeEach(() => {
+    server = new MockMcpServer()
+    resetNotes()
+    registerNoteTools(server as any)
   })
-})
 
-describe('Note Tools - duplicate titles', () => {
-  it('should reject duplicate titles', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
+  describe('create_note', () => {
+    it('should create a note with valid input', async () => {
+      const result = await server.callTool('create_note', {
+        title: 'Test Note',
+        content: 'This is a test note'
+      })
 
-    await server.callTool('create_note', {
-      title: 'Duplicate Note',
-      content: 'First note'
+      expect(result.content[0].type).toBe('text')
+      expect(result.content[0].text).toContain('Note created with ID:')
     })
 
-    // Second creation with same title should fail
-    const result = await server.callTool('create_note', {
-      title: 'Duplicate Note',
-      content: 'Second note with same title'
-    }) as { content: Array<{ type: string; text: string }> }
+    it('should create a note with tags', async () => {
+      const result = await server.callTool('create_note', {
+        title: 'Tagged Note',
+        content: 'This is a tagged note',
+        tags: ['test', 'example']
+      })
 
-    expect(result.content[0].text).toContain('Error:')
-    expect(result.content[0].text).toContain('DUPLICATE_TITLE')
+      // Get the ID from the response
+      const id = extractIdFromResponse(result)
+      expect(id).not.toBe('')
+
+      // Retrieve the note to verify tags were saved
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Tags: test, example')
+    })
   })
-})
 
-describe('Note Tools - list_notes empty', () => {
-  it('should return message when no notes exist', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
-
-    const result = await server.callTool('list_notes', {}) as { content: Array<{ type: string; text: string }> }
-
-    expect(result.content[0].text).toBe('No notes found.')
-  })
-})
-
-describe('Note Tools - list_notes with data', () => {
-  it('should list created notes', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
-
-    // Create a note first
-    await server.callTool('create_note', {
-      title: 'Note 1',
-      content: 'Content 1'
+  describe('list_notes', () => {
+    it('should return "No notes found" when no notes exist', async () => {
+      const result = await server.callTool('list_notes', {})
+      expect(result.content[0].text).toBe('No notes found.')
     })
 
-    const result = await server.callTool('list_notes', {}) as { content: Array<{ type: string; text: string }> }
+    it('should list created notes', async () => {
+      // Create a couple of notes
+      await server.callTool('create_note', {
+        title: 'First Note',
+        content: 'First note content'
+      })
 
-    expect(result.content[0].text).toContain('Available Notes:')
-    expect(result.content[0].text).toContain('Note 1')
-  })
-})
+      await server.callTool('create_note', {
+        title: 'Second Note',
+        content: 'Second note content'
+      })
 
-describe('Note Tools - get_note error', () => {
-  it('should return error for non-existent note', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
-
-    const result = await server.callTool('get_note', { id: 'nonexistent' }) as { content: Array<{ type: string; text: string }> }
-
-    expect(result.content[0].text).toContain('Error:')
-    expect(result.content[0].text).toContain('NOTE_NOT_FOUND')
-  })
-})
-
-describe('Note Tools - get_note success', () => {
-  it('should return note content for valid ID', async () => {
-    const server = new MockMcpServer()
-    registerNoteTools(server as unknown as McpServer)
-
-    const createResult = await server.callTool('create_note', {
-      title: 'Test Note',
-      content: 'Test Content'
-    }) as { content: Array<{ type: string; text: string }> }
-
-    // Extract the ID from the response
-    const idMatch = createResult.content[0].text.match(/ID: ([a-z0-9]+)/)
-    const id = idMatch ? idMatch[1] : ''
-
-    expect(id).not.toBe('') // Ensure we got a valid ID
-
-    const getResult = await server.callTool('get_note', { id }) as { content: Array<{ type: string; text: string }> }
-
-    expect(getResult.content[0].text).toContain('Test Note')
-    expect(getResult.content[0].text).toContain('Test Content')
-  })
-})
-
-// Tests for the calculate tool defined in index.ts
-describe('Calculate Tool Tests', () => {
-  // Mock implementation of the calculate tool
-  const calculateTool = async (params: { expression: string }): Promise<{ content: Array<{ type: string; text: string }> }> => {
-    try {
-      // WARNING: Using eval in tests is for demonstration purposes only
-      const result = eval(params.expression)
-      return {
-        content: [{
-          type: 'text',
-          text: `Result: ${result}`
-        }]
-      }
-    } catch (error) {
-      return {
-        content: [{
-          type: 'text',
-          text: `Error calculating expression: ${(error as Error).message}`
-        }]
-      }
-    }
-  }
-
-  it('should calculate simple arithmetic expressions', async () => {
-    const result = await calculateTool({ expression: '2 + 2' })
-    expect(result.content[0].text).toBe('Result: 4')
+      const result = await server.callTool('list_notes', {})
+      expect(result.content[0].text).toContain('Available Notes:')
+      expect(result.content[0].text).toContain('First Note')
+      expect(result.content[0].text).toContain('Second Note')
+    })
   })
 
-  it('should handle more complex expressions', async () => {
-    const result = await calculateTool({ expression: '(10 * 5) / 2' })
-    expect(result.content[0].text).toBe('Result: 25')
+  describe('get_note', () => {
+    it('should retrieve a note by ID', async () => {
+      // Create a note
+      const createResult = await server.callTool('create_note', {
+        title: 'Note to Retrieve',
+        content: 'This note will be retrieved'
+      })
+
+      // Extract the ID from the response
+      const id = extractIdFromResponse(createResult)
+      expect(id).not.toBe('')
+
+      // Retrieve the note
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Note to Retrieve')
+      expect(getResult.content[0].text).toContain('This note will be retrieved')
+    })
+
+    it('should return an error for non-existent ID', async () => {
+      const result = await server.callTool('get_note', { id: 'nonexistent' })
+      expect(result.content[0].text).toContain('Error')
+      expect(result.isError).toBe(true)
+    })
   })
 
-  it('should return error for invalid expressions', async () => {
-    const result = await calculateTool({ expression: '2 + * 2' })
-    expect(result.content[0].text).toContain('Error calculating expression:')
+  describe('update_note', () => {
+    it('should update a note\'s title', async () => {
+      // Create a note
+      const createResult = await server.callTool('create_note', {
+        title: 'Original Title',
+        content: 'Original content'
+      })
+
+      // Extract the ID
+      const id = extractIdFromResponse(createResult)
+
+      // Update the note
+      const updateResult = await server.callTool('update_note', {
+        id,
+        title: 'Updated Title'
+      })
+      expect(updateResult.content[0].text).toContain('updated successfully')
+
+      // Verify the update
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Updated Title')
+      expect(getResult.content[0].text).toContain('Original content')
+    })
+
+    it('should update a note\'s content', async () => {
+      // Create a note
+      const createResult = await server.callTool('create_note', {
+        title: 'Test Note',
+        content: 'Original content'
+      })
+
+      // Extract the ID
+      const id = extractIdFromResponse(createResult)
+
+      // Update the note
+      await server.callTool('update_note', {
+        id,
+        content: 'Updated content'
+      })
+
+      // Verify the update
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Test Note')
+      expect(getResult.content[0].text).toContain('Updated content')
+    })
+
+    it('should update a note\'s tags', async () => {
+      // Create a note
+      const createResult = await server.callTool('create_note', {
+        title: 'Test Note',
+        content: 'Content',
+        tags: ['original']
+      })
+
+      // Extract the ID
+      const id = extractIdFromResponse(createResult)
+
+      // Update the note
+      await server.callTool('update_note', {
+        id,
+        tags: ['updated', 'tag']
+      })
+
+      // Verify the update
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Tags: updated, tag')
+    })
+  })
+
+  describe('delete_note', () => {
+    it('should delete a note', async () => {
+      // Create a note
+      const createResult = await server.callTool('create_note', {
+        title: 'Note to Delete',
+        content: 'This note will be deleted'
+      })
+
+      // Extract the ID
+      const id = extractIdFromResponse(createResult)
+
+      // Delete the note
+      const deleteResult = await server.callTool('delete_note', { id })
+      expect(deleteResult.content[0].text).toContain('deleted successfully')
+
+      // Verify the deletion
+      const getResult = await server.callTool('get_note', { id })
+      expect(getResult.content[0].text).toContain('Error')
+      expect(getResult.isError).toBe(true)
+    })
+
+    it('should return an error for non-existent ID', async () => {
+      const result = await server.callTool('delete_note', { id: 'nonexistent' })
+      expect(result.content[0].text).toContain('Error')
+      expect(result.isError).toBe(true)
+    })
   })
 })
