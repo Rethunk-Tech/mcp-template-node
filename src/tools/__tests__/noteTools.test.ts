@@ -1,3 +1,4 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { MockMcpServer, extractIdFromResponse } from '../../__tests__/test-utils.js'
 import { registerNoteTools, resetNotes } from '../noteTools.js'
@@ -8,7 +9,7 @@ describe('Note Tools', () => {
   beforeEach(() => {
     server = new MockMcpServer()
     resetNotes()
-    registerNoteTools(server as any)
+    registerNoteTools(server as unknown as McpServer)
   })
 
   describe('create_note', () => {
