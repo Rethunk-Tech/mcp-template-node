@@ -1,63 +1,51 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
-import { NoteError } from '../errors/NoteError.js'
 import { Note } from '../types/note.js'
 
-// In-memory storage (would be a database in a real application)
+// Store notes in memory
 const notes: Record<string, Note> = {}
 
 /**
- * Resets the in-memory notes storage (for testing purposes)
+ * Generate a unique ID for a note
  */
-export function resetNotes(): void {
-  // Clear all notes from the in-memory storage
-  Object.keys(notes).forEach(key => {
-    delete notes[key]
-  })
+function generateId(): string {
+  return uuidv4().replace(/-/g, '').substring(0, 8)
 }
 
 /**
- * Generates a unique ID for a note
+ * Resets the notes for testing purposes
  */
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 10)
+export function resetNotes(): void {
+  Object.keys(notes).forEach((key) => delete notes[key])
 }
 
 /**
  * Registers note-related tools with the MCP server
+ * Implements CRUD operations for notes management
  */
 export function registerNoteTools(server: McpServer): void {
-  // Create Note Tool
+  // Tool: Create a new note
   server.tool(
     'create_note',
     {
-      title: z.string()
-        .min(1, 'Title is required')
-        .max(100, 'Title cannot exceed 100 characters')
-        .trim()
-        .describe('The title of the note. Must be unique, non-empty, and maximum 100 characters.'),
-      content: z.string()
-        .min(1, 'Content is required')
-        .max(10000, 'Content cannot exceed 10000 characters')
-        .trim()
-        .describe('The content/body of the note. Must be non-empty and maximum 10000 characters.')
+      title: z.string().min(1).max(100),
+      content: z.string().min(1).max(10000),
+      tags: z.array(z.string()).optional(),
     },
-    async ({ title, content }) => {
+    async ({ title, content, tags }: { title: string; content: string; tags?: string[] }) => {
       try {
-        // Check for duplicate titles
-        if (Object.values(notes).some(note => note.title === title)) {
-          throw NoteError.duplicateTitle(title)
-        }
-
         const id = generateId()
-        const note: Note = {
+        const now = new Date()
+
+        notes[id] = {
           id,
           title,
           content,
-          createdAt: new Date()
+          tags,
+          createdAt: now,
+          updatedAt: now,
         }
-
-        notes[id] = note
 
         return {
           content: [{
@@ -66,30 +54,26 @@ export function registerNoteTools(server: McpServer): void {
           }]
         }
       } catch (error) {
-        if (error instanceof NoteError) {
-          return {
-            content: [{
-              type: 'text',
-              text: `Error: ${error.message} (${error.code})`
-            }]
-          }
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
         }
-        throw error
       }
     }
   )
 
-  // List Notes Tool
+  // Tool: List all notes
   server.tool(
     'list_notes',
-    {
-      // Empty schema since this tool doesn't require parameters
-    },
+    {},
     async () => {
       try {
-        const notesList = Object.values(notes)
+        const allNotes = Object.values(notes)
 
-        if (notesList.length === 0) {
+        if (allNotes.length === 0) {
           return {
             content: [{
               type: 'text',
@@ -98,11 +82,14 @@ export function registerNoteTools(server: McpServer): void {
           }
         }
 
-        const formattedNotes = notesList
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .map(note =>
-            `ID: ${note.id}\nTitle: ${note.title}\nCreated: ${note.createdAt.toISOString()}\n---\n`
-          ).join('\n')
+        const formattedNotes = allNotes
+          .map(note => {
+            const tagsStr = note.tags && note.tags.length > 0
+              ? `\nTags: ${note.tags.join(', ')}`
+              : ''
+
+            return `ID: ${note.id}\nTitle: ${note.title}${tagsStr}\nCreated: ${note.createdAt.toISOString()}\n---\n`
+          }).join('\n')
 
         return {
           content: [{
@@ -111,56 +98,145 @@ export function registerNoteTools(server: McpServer): void {
           }]
         }
       } catch (error) {
-        console.error('Error listing notes:', error)
         return {
           content: [{
             type: 'text',
-            text: 'Error: Failed to list notes'
-          }]
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
         }
       }
     }
   )
 
-  // Get Note Tool
+  // Tool: Get a note by ID
   server.tool(
     'get_note',
     {
-      id: z.string()
-        .min(1, 'ID is required')
-        .max(8, 'Invalid ID format')
-        .regex(/^[a-z0-9]+$/, 'Invalid ID format')
-        .describe('The unique identifier of the note to retrieve. Must be an alphanumeric string up to 8 characters. You can get note IDs by using the list_notes tool.')
+      id: z.string().min(1).max(8).regex(/^[a-z0-9]+$/),
     },
-    async ({ id }) => {
+    async ({ id }: { id: string }) => {
       try {
         const note = notes[id]
 
         if (!note) {
-          throw NoteError.notFound(id)
-        }
-
-        return {
-          content: [{
-            type: 'text',
-            text: `Title: ${note.title}\nCreated: ${note.createdAt.toISOString()}\n\n${note.content}`
-          }]
-        }
-      } catch (error) {
-        if (error instanceof NoteError) {
           return {
             content: [{
               type: 'text',
-              text: `Error: ${error.message} (${error.code})`
-            }]
+              text: `Error: No note found with ID: ${id}`
+            }],
+            isError: true
           }
         }
+
+        const tagsStr = note.tags && note.tags.length > 0
+          ? `\nTags: ${note.tags.join(', ')}`
+          : ''
 
         return {
           content: [{
             type: 'text',
-            text: 'Error: Failed to retrieve note'
+            text: `Title: ${note.title}${tagsStr}\nCreated: ${note.createdAt.toISOString()}\nUpdated: ${note.updatedAt?.toISOString() || note.createdAt.toISOString()}\n\n${note.content}`
           }]
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        }
+      }
+    }
+  )
+
+  // Tool: Update a note
+  server.tool(
+    'update_note',
+    {
+      id: z.string().min(1).max(8).regex(/^[a-z0-9]+$/),
+      title: z.string().min(1).max(100).optional(),
+      content: z.string().min(1).max(10000).optional(),
+      tags: z.array(z.string()).optional(),
+    },
+    async ({ id, title, content, tags }: { id: string; title?: string; content?: string; tags?: string[] }) => {
+      try {
+        const note = notes[id]
+
+        if (!note) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error: No note found with ID: ${id}`
+            }],
+            isError: true
+          }
+        }
+
+        const updatedNote = {
+          ...note,
+          title: title !== undefined ? title : note.title,
+          content: content !== undefined ? content : note.content,
+          tags: tags !== undefined ? tags : note.tags,
+          updatedAt: new Date(),
+        }
+
+        notes[id] = updatedNote
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Note with ID ${id} updated successfully.`
+          }]
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        }
+      }
+    }
+  )
+
+  // Tool: Delete a note
+  server.tool(
+    'delete_note',
+    {
+      id: z.string().min(1).max(8).regex(/^[a-z0-9]+$/),
+    },
+    async ({ id }: { id: string }) => {
+      try {
+        const note = notes[id]
+
+        if (!note) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error: No note found with ID: ${id}`
+            }],
+            isError: true
+          }
+        }
+
+        delete notes[id]
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Note with ID ${id} deleted successfully.`
+          }]
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
         }
       }
     }
