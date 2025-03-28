@@ -10,6 +10,7 @@ Thank you for your interest in contributing to the MCP Template Node project! Th
    - Git
 
 2. **Clone and Install**
+
    ```bash
    git clone https://github.com/yourusername/mcp-template-node.git
    cd mcp-template-node
@@ -68,6 +69,7 @@ src/
    - Include comprehensive error handling
    - Return appropriate content types
    - Example:
+
      ```typescript
      server.tool(
        'tool_name',
@@ -89,6 +91,7 @@ src/
    - Use ResourceTemplate for parameterized resources
    - Return consistent formats
    - Example:
+
      ```typescript
      server.resource(
        'resource_name',
@@ -106,6 +109,7 @@ src/
    - Keep prompts simple and focused
    - Use message role 'user' for most cases
    - Example:
+
      ```typescript
      server.prompt(
        'prompt_name',
@@ -152,6 +156,7 @@ We use the Conventional Commits specification for commit messages:
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -161,6 +166,7 @@ Types:
 - `chore`: Maintenance
 
 Example:
+
 ```
 feat(tools): add new note search tool
 
@@ -196,6 +202,7 @@ Implements fuzzy search for notes using title and content.
 ## Questions or Problems?
 
 Feel free to open an issue for:
+
 - Bug reports
 - Feature requests
 - Questions about the codebase
