@@ -4228,7 +4228,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.28.0"
     "@typescript-eslint/parser": "npm:^8.28.0"
     "@vitest/coverage-v8": "npm:3.0.9"
-    eslint: "npm:^9.23.0"
+    eslint: "npm:^9.24.0"
     globals: "npm:^16.0.0"
     jest: "npm:^29.7.0"
     nodemon: "npm:^3.1.9"
